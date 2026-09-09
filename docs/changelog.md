@@ -9,3 +9,13 @@
 - 修正：此前的 changelog/commit 声称“已连通”，当时实际未用真实 Key 验证；现以真实输出为准
 - 卡点：GitHub clone 连接被重置，改用 ZIP 下载解决；uv 0.12 默认 src 布局，运行方式需用 .venv python 或 uv run
 - 明天第一件事：搭 LLM 客户端封装（Day 2）
+
+## 2026-09-09（Day 2-3 里程碑验收）
+- 完成：config / schemas / llm / MockLLM 模块落地；pytest 全量通过（13 passed）
+- 真实运行输出（LLMClient.structured → ResearchPlan）：
+
+```json
+{"topic":"AI Agent internship research","outline":["Overview of AI Agent field and internship landscape","Key skills and qualifications required","Top companies offering AI Agent internships","Application process and timeline","Resources for finding opportunities"],"keyword_groups":[["AI agent","internship","machine learning","NLP"],["LLM","reinforcement learning","autonomous agents","career"],["OpenAI","Anthropic","DeepMind","research"]]}
+```
+
+- 说明：上述输出为 .venv python 真实调用 DeepSeek 的结果，未做修改
