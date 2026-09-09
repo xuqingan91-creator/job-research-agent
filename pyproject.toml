@@ -6,6 +6,7 @@ readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
     "openai>=3.10.0",
+    "pydantic>=2.13.5",
     "python-dotenv>=1.2.3",
     "tavily-python>=0.8.1",
 ]
@@ -16,3 +17,11 @@ job-research-agent = "job_research_agent:main"
 [build-system]
 requires = ["uv_build>=0.12.11,<0.13.0"]
 build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
