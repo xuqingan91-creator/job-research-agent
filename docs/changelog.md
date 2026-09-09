@@ -52,3 +52,13 @@
   - AVG_RULE 100.0，AVG_FINAL 88.0，PASSED 1
   - 报告 3744 字，SOURCES 2，PAGES 1
   - 结果已落盘 outputs/eval/eval-*.json（git 忽略，作为简历数字证据）
+
+## 2026-09-09（HITL 大纲人机确认里程碑验收）
+- 完成：confirm 节点（interrupt）→ Planner 出大纲后暂停，人工修改后 Command(resume) 恢复
+- pytest：新增 HITL 测试（暂停 → 修改 → 恢复 → 新关键词被搜索），全量 27 passed
+- 端到端真实验证：
+  - PAUSED_PLAN_TOPIC=AI Agent Internship Research Plan
+  - RESUME 后大纲改为“自定义大纲：聚焦 RAG 面经”并生效
+  - 恢复后产出 4880 字报告
+- 技术债记录：LangGraph checkpoint 对 Pydantic 对象有 msgpack 反序列化警告
+  （当前可用，未来版本可能阻止；后续可注册模块或把 state 改为纯 dict）

@@ -2,6 +2,8 @@
 
 from collections.abc import Callable
 
+from langgraph.types import interrupt
+
 from job_research_agent.llm import ChatResult, LLMClient
 from job_research_agent.prompts import (
     PLANNER_SYSTEM,
@@ -111,6 +113,17 @@ def make_reflect_node(llm: LLMClient) -> Callable[[ResearchState], dict]:
         }
 
     return reflect_node
+
+
+def make_confirm_node() -> Callable[[ResearchState], dict]:
+    def confirm_node(state: ResearchState) -> dict:
+        plan: ResearchPlan = state["plan"]
+        reply = interrupt({"type": "plan_review", "plan": plan})
+        if reply is not None:
+            return {"plan": reply}
+        return {}
+
+    return confirm_node
 
 
 def make_analyze_node(max_evidence_chars: int = 8000) -> Callable[[ResearchState], dict]:

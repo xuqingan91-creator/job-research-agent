@@ -2,12 +2,14 @@
 
 from collections.abc import Callable
 
+from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.graph import END, START, StateGraph
 
 from job_research_agent.fetch import fetch_page
 from job_research_agent.llm import LLMClient
 from job_research_agent.nodes import (
     make_analyze_node,
+    make_confirm_node,
     make_fetch_node,
     make_planner_node,
     make_reflect_node,
@@ -29,6 +31,8 @@ def build_research_graph(
     max_chars: int = 1500,
     max_iterations: int = 2,
     token_budget: int = 20000,
+    enable_hitl: bool = False,
+    checkpointer=None,
 ) -> Callable:
     graph = StateGraph(ResearchState)
     graph.add_node("planner", make_planner_node(llm))
@@ -48,6 +52,8 @@ def build_research_graph(
     graph.add_node("reflect", make_reflect_node(llm))
     graph.add_node("analyze", make_analyze_node())
     graph.add_node("report", make_report_node(llm))
+    if enable_hitl:
+        graph.add_node("confirm", make_confirm_node())
 
     def route_after_reflect(state: ResearchState) -> str:
         if (
@@ -59,7 +65,11 @@ def build_research_graph(
         return "analyze"
 
     graph.add_edge(START, "planner")
-    graph.add_edge("planner", "search")
+    if enable_hitl:
+        graph.add_edge("planner", "confirm")
+        graph.add_edge("confirm", "search")
+    else:
+        graph.add_edge("planner", "search")
     graph.add_edge("search", "fetch")
     graph.add_edge("fetch", "reflect")
     graph.add_conditional_edges(
@@ -69,4 +79,6 @@ def build_research_graph(
     )
     graph.add_edge("analyze", "report")
     graph.add_edge("report", END)
+    if enable_hitl:
+        return graph.compile(checkpointer=checkpointer or InMemorySaver())
     return graph.compile()
