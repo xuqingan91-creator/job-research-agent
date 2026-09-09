@@ -62,3 +62,14 @@
   - 恢复后产出 4880 字报告
 - 技术债记录：LangGraph checkpoint 对 Pydantic 对象有 msgpack 反序列化警告
   （当前可用，未来版本可能阻止；后续可注册模块或把 state 改为纯 dict）
+
+## 2026-09-09（V1 收尾）
+- 完成：runner.py（非交互编排入口）+ cli.py（交互 CLI，SQLite checkpointer）+ .env.example
+- 真实兼容修复（基准运行暴露）：
+  - 关键词组为 dict 形态 → ResearchPlan 归一化
+  - ReflectionDecision 返回 sufficient 同义字段 → 归一化
+  - 模型自由改字段名 → structured() 自动注入 JSON Schema 并强制字段名
+- 固定基准集 benchmark_cases.py（5 个求职场景）
+- 真实基准运行：5/5 通过，规则均分 100，综合均分 94
+  - 各 case 报告长度 3279-4233 字，来源 2 个/任务
+- README 更新为完整使用文档；outputs/ 加入 git 忽略

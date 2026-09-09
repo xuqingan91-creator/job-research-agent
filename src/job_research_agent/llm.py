@@ -134,13 +134,20 @@ class LLMClient:
         user_prompt: str,
         temperature: float = 0.3,
     ) -> BaseModel:
+        schema_text = json.dumps(
+            output_model.model_json_schema(),
+            ensure_ascii=False,
+        )
+        user_prompt = (
+            user_prompt
+            + "\n\n请严格只输出合法 JSON，不要输出任何解释。"
+            + "\n\n你必须严格按照以下 JSON Schema 的字段名输出，"
+            + "不要改用同义字段名，不要把对象包裹在额外字段里：\n"
+            + schema_text
+        )
         messages: list[dict[str, str]] = [
             {"role": "system", "content": system_prompt},
-            {
-                "role": "user",
-                "content": user_prompt
-                + "\n\n请严格只输出合法 JSON，不要输出任何解释。",
-            },
+            {"role": "user", "content": user_prompt},
         ]
         last_error: Exception | None = None
         for attempt in range(self.max_retries + 1):

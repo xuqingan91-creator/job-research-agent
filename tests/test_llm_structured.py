@@ -76,6 +76,18 @@ def test_structured_accepts_wrapped_json():
     assert len(fake.calls) == 1
 
 
+def test_structured_user_prompt_includes_json_schema():
+    fake = FakeStructuredLLM([json.dumps({"keywords": ["a"]})])
+    fake.structured(
+        KeywordPlan,
+        system_prompt="你是规划助手",
+        user_prompt="生成关键词",
+    )
+    first_user = fake.calls[0][0][-1]["content"]
+    assert '"keywords"' in first_user
+    assert "JSON Schema" in first_user
+
+
 def test_structured_raises_after_max_retries():
     fake = FakeStructuredLLM(["bad", "bad", "bad"])
     with pytest.raises(LLMStructuredOutputError):

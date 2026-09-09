@@ -36,10 +36,29 @@ def test_research_plan_holds_outline_and_keyword_groups():
     assert len(plan.keyword_groups) == 2
 
 
+def test_research_plan_normalizes_dict_keyword_groups():
+    plan = ResearchPlan(
+        topic="调研",
+        outline=["章节"],
+        keyword_groups=[
+            {"section": "公司背景", "keywords": ["小米 Agent", "小米 IoT"]},
+            {"keywords": ["RAG 面经"]},
+        ],
+    )
+    assert plan.keyword_groups == [["小米 Agent", "小米 IoT"], ["RAG 面经"]]
+
+
 def test_reflection_decision_defaults_to_empty_lists():
     decision = ReflectionDecision(enough=False)
     assert decision.gaps == []
     assert decision.new_keywords == []
+
+
+def test_reflection_decision_accepts_sufficient_alias():
+    decision = ReflectionDecision.model_validate(
+        {"sufficient": False, "gaps": ["缺资料"], "new_keywords": ["补搜"]}
+    )
+    assert decision.enough is False
 
 
 def test_source_item_requires_url():
