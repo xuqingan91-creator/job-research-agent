@@ -110,3 +110,46 @@ class LLMClient:
                     break
                 time.sleep(self.retry_backoff * (2**attempt))
         raise LLMError(f"LLM call failed after {self.max_retries + 1} attempts") from last_error
+
+    def structured(
+        self,
+        output_model: type[BaseModel],
+        *,
+        system_prompt: str,
+        user_prompt: str,
+        temperature: float = 0.3,
+    ) -> BaseModel:
+        messages: list[dict[str, str]] = [
+            {"role": "system", "content": system_prompt},
+            {
+                "role": "user",
+                "content": user_prompt
+                + "\n\n请严格只输出合法 JSON，不要输出任何解释。",
+            },
+        ]
+        last_error: Exception | None = None
+        for attempt in range(self.max_retries + 1):
+            result: ChatResult | None = None
+            try:
+                result = self.chat(
+                    messages, temperature=temperature, json_mode=True
+                )
+                payload = json.loads(result.content)
+                return output_model.model_validate(payload)
+            except (json.JSONDecodeError, ValidationError) as exc:
+                last_error = exc
+                if attempt >= self.max_retries:
+                    break
+                messages.append({"role": "assistant", "content": result.content})
+                messages.append(
+                    {
+                        "role": "user",
+                        "content": f"你上一次输出无法通过校验：{exc}。请重新只输出合法 JSON。",
+                    }
+                )
+            except LLMError as exc:
+                last_error = exc
+                break
+        raise LLMStructuredOutputError(
+            f"Structured output failed after {self.max_retries + 1} attempts"
+        ) from last_error
