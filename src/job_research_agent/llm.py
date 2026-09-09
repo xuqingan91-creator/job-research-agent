@@ -153,3 +153,29 @@ class LLMClient:
         raise LLMStructuredOutputError(
             f"Structured output failed after {self.max_retries + 1} attempts"
         ) from last_error
+
+
+class MockLLM(LLMClient):
+    """离线替身：按 scenario 返回预设文本，不联网、不花钱。"""
+
+    def __init__(
+        self,
+        responses: dict[str, str] | None = None,
+        *,
+        scenario: str = "default",
+    ) -> None:
+        super().__init__(api_key="mock-key", max_retries=0)
+        self.responses = responses or {}
+        self.scenario = scenario
+        self.calls: list[list[dict[str, str]]] = []
+
+    def chat(
+        self,
+        messages: list[dict[str, str]],
+        *,
+        temperature: float = 0.3,
+        json_mode: bool = False,
+    ) -> ChatResult:
+        self.calls.append(messages)
+        content = self.responses.get(self.scenario, "")
+        return ChatResult(content=content, usage=Usage())
