@@ -70,6 +70,11 @@ class LLMClient:
             else retry_backoff
         )
         self._openai_client: OpenAI | None = None
+        self.usage_records: list[Usage] = []
+
+    @property
+    def total_tokens(self) -> int:
+        return sum(record.total_tokens for record in self.usage_records)
 
     def _get_client(self) -> OpenAI:
         if self._openai_client is None:
@@ -110,6 +115,7 @@ class LLMClient:
                         prompt_tokens=usage.prompt_tokens,
                         completion_tokens=usage.completion_tokens,
                     )
+                    self.usage_records.append(usage_data)
                 else:
                     usage_data = None
                 return ChatResult(content=content, usage=usage_data)
@@ -193,4 +199,6 @@ class MockLLM(LLMClient):
     ) -> ChatResult:
         self.calls.append(messages)
         content = self.responses.get(self.scenario, "")
-        return ChatResult(content=content, usage=Usage())
+        usage = Usage()
+        self.usage_records.append(usage)
+        return ChatResult(content=content, usage=usage)

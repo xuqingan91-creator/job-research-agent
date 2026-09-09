@@ -35,3 +35,12 @@
 - pytest：新增 graph 2 + wrapped-json 1 = 3 个测试
 - 端到端真实验证：输入英文 JD → 产出中文五段式报告
   - SOURCES 3，PAGES 1，final_report 为完整 Markdown（含 JD 拆解表格）
+
+## 2026-09-09（反思循环 + 护栏里程碑验收）
+- 完成：Reflect 节点 + 条件路由（不足→回 Search / 足够→Analyze）
+- 完成：双重护栏（max_iterations + token 预算），超限强制收尾仍产出报告
+- 修复两个循环 bug：重复搜索旧关键词、重复抓取旧来源（searched_keywords / fetched_urls 去重）
+- pytest：新增 reflect 循环 + 护栏测试，全量 23 passed
+- 端到端真实验证（max_iterations=2）：
+  - SOURCES 2，PAGES 1，ITERATION 2，ENOUGH False
+  - Reflect 两次判断资料不足 → 被护栏截停 → 仍生成 3397 字报告（符合设计）

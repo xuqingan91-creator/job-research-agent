@@ -13,3 +13,6 @@ class ResearchState(TypedDict, total=False):
     evidence_text: str
     final_report: str
     iteration: int
+    enough: bool
+    searched_keywords: list[str]
+    fetched_urls: list[str]
