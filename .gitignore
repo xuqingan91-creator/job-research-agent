@@ -17,3 +17,6 @@ reference/
 
 # uv 本地缓存（沙箱重定向用）
 .uv-cache/
+
+# 运行时评测结果
+outputs/

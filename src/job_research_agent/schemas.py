@@ -25,3 +25,8 @@ class SourceItem(BaseModel):
     url: str = Field(..., min_length=1, description="来源网址")
     title: str = Field(default="", description="标题")
     snippet: str = Field(default="", description="摘要")
+
+
+class ReportJudgeScore(BaseModel):
+    quality_score: int = Field(..., ge=1, le=5, description="报告质量分 1-5")
+    summary: str = Field(default="", description="一句话评语")

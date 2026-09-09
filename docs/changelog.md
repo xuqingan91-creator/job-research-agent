@@ -44,3 +44,11 @@
 - 端到端真实验证（max_iterations=2）：
   - SOURCES 2，PAGES 1，ITERATION 2，ENOUGH False
   - Reflect 两次判断资料不足 → 被护栏截停 → 仍生成 3397 字报告（符合设计）
+
+## 2026-09-09（评测器里程碑验收）
+- 完成：eval_harness.py（固定基准任务 + 规则打分 + 可选 LLM 打分 + JSON 落盘）
+- pytest：新增 3 个测试（完整报告高分 / 空报告低分 / benchmark 落盘）
+- 真实基准运行（1 case，规则 + 真实 LLM judge）：
+  - AVG_RULE 100.0，AVG_FINAL 88.0，PASSED 1
+  - 报告 3744 字，SOURCES 2，PAGES 1
+  - 结果已落盘 outputs/eval/eval-*.json（git 忽略，作为简历数字证据）

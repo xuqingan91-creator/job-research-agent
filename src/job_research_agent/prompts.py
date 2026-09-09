@@ -1,6 +1,10 @@
 """提示词集中管理：改文案不碰代码。"""
 
-from job_research_agent.schemas import JobResearchInput, ResearchPlan, SourceItem
+from job_research_agent.schemas import (
+    JobResearchInput,
+    ResearchPlan,
+    SourceItem,
+)
 
 PLANNER_SYSTEM = (
     "You are a job research planner. "
@@ -15,6 +19,12 @@ REPORT_SYSTEM = (
 
 REFLECT_SYSTEM = (
     "You are a research quality controller. "
+    "Always answer with valid JSON matching the required schema. "
+    "Do NOT wrap the JSON inside another field."
+)
+
+JUDGE_SYSTEM = (
+    "You are a strict report quality judge. "
     "Always answer with valid JSON matching the required schema. "
     "Do NOT wrap the JSON inside another field."
 )
@@ -61,4 +71,17 @@ def reflect_user_prompt(
         f"当前迭代轮次：{iteration}\n\n"
         "请判断资料是否足以撰写五段式求职报告。"
         "若不足，说明缺口并给出补充搜索关键词（ReflectionDecision JSON）。"
+    )
+
+
+def judge_user_prompt(
+    company: str,
+    report: str,
+    source_count: int,
+) -> str:
+    return (
+        f"目标岗位：{company}\n"
+        f"来源数量：{source_count}\n"
+        f"报告内容：\n{report[:6000]}\n\n"
+        "请从结构完整度、内容可执行性、来源支撑三个维度打分（1-5），并给一句话评语。"
     )
