@@ -19,3 +19,11 @@
 ```
 
 - 说明：上述输出为 .venv python 真实调用 DeepSeek 的结果，未做修改
+
+## 2026-09-09（Day 4-5 里程碑验收）
+- 完成：search.py（Tavily 搜索统一接口）+ fetch.py（requests + BeautifulSoup 正文清洗）
+- pytest：search 2 + fetch 3 = 5 个新测试通过
+- 真实验证（TavilySearchProvider.search）：返回 5 条真实结果
+- 真实验证（fetch_page）：
+  - Reddit 页面 → FetchError（403/反爬）→ 符合“单条失败不崩”设计
+  - eightfold.ai 页面 → FETCH_OK，成功清洗并截断 300 字符
