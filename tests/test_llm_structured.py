@@ -63,6 +63,19 @@ def test_structured_retries_then_succeeds():
     assert len(fake.calls) == 2
 
 
+def test_structured_accepts_wrapped_json():
+    fake = FakeStructuredLLM(
+        [json.dumps({"research_plan": {"keywords": ["a", "b"]}})]
+    )
+    plan = fake.structured(
+        KeywordPlan,
+        system_prompt="你是规划助手",
+        user_prompt="生成关键词",
+    )
+    assert plan.keywords == ["a", "b"]
+    assert len(fake.calls) == 1
+
+
 def test_structured_raises_after_max_retries():
     fake = FakeStructuredLLM(["bad", "bad", "bad"])
     with pytest.raises(LLMStructuredOutputError):

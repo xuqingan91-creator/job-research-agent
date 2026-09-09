@@ -21,6 +21,15 @@ class LLMStructuredOutputError(LLMError):
     """结构化输出经重试后仍然失败。"""
 
 
+def _unwrap_wrapped_payload(payload: Any) -> Any:
+    """部分模型会把 JSON 包在单键对象里，例如 {"research_plan": {...}}。"""
+    if isinstance(payload, dict) and len(payload) == 1:
+        inner = next(iter(payload.values()))
+        if isinstance(inner, dict):
+            return inner
+    return None
+
+
 @dataclass
 class Usage:
     prompt_tokens: int = 0
@@ -135,7 +144,13 @@ class LLMClient:
                     messages, temperature=temperature, json_mode=True
                 )
                 payload = json.loads(result.content)
-                return output_model.model_validate(payload)
+                try:
+                    return output_model.model_validate(payload)
+                except ValidationError:
+                    inner = _unwrap_wrapped_payload(payload)
+                    if inner is not None:
+                        return output_model.model_validate(inner)
+                    raise
             except (json.JSONDecodeError, ValidationError) as exc:
                 last_error = exc
                 if attempt >= self.max_retries:

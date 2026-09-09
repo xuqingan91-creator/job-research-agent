@@ -27,3 +27,11 @@
 - 真实验证（fetch_page）：
   - Reddit 页面 → FetchError（403/反爬）→ 符合“单条失败不崩”设计
   - eightfold.ai 页面 → FETCH_OK，成功清洗并截断 300 字符
+
+## 2026-09-09（LangGraph 线性流水线里程碑验收）
+- 完成：state.py / prompts.py / nodes.py / graph.py，Planner → Search → Fetch → Analyze → Report 线性流程
+- 真实 bug 与修复：DeepSeek 把 ResearchPlan 包在 {"research_plan": {...}} 外层导致校验失败；
+  增加自动解包逻辑 + 提示词禁止包裹，新增测试锁定该行为
+- pytest：新增 graph 2 + wrapped-json 1 = 3 个测试
+- 端到端真实验证：输入英文 JD → 产出中文五段式报告
+  - SOURCES 3，PAGES 1，final_report 为完整 Markdown（含 JD 拆解表格）
