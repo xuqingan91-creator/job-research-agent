@@ -24,7 +24,7 @@ class JobResearchInput(BaseModel):
     company: str = Field(..., min_length=1, description="公司/岗位名称")
     jd_text: str = Field(..., min_length=1, description="JD 全文")
     profile_text: str = Field(default="", description="个人背景简述")
-    language: Literal["zh", "en", "ja"] = Field(default="zh", description="报告语言")
+    language: Literal["zh", "en"] = Field(default="zh", description="报告语言")
 
 
 class ResearchPlan(BaseModel):
@@ -79,3 +79,28 @@ class JobSearchTheme(BaseModel):
     directions: list[str] = Field(default_factory=list, description="限定岗位方向")
     tech_tags: list[str] = Field(default_factory=list, description="限定技术标签")
     locations: list[str] = Field(default_factory=list, description="限定地点")
+
+
+class ResumeSection(BaseModel):
+    title: str = Field(..., min_length=1, description="板块标题")
+    content: str = Field(default="", description="板块内容")
+
+
+class ParsedResume(BaseModel):
+    raw_text: str = Field(..., description="简历全文")
+    sections: list[ResumeSection] = Field(default_factory=list, description="分板块结果")
+    source: str = Field(default="text", description="来源类型：text/pdf/image")
+
+
+class PolishedSection(BaseModel):
+    title: str = Field(..., min_length=1, description="板块标题")
+    original: str = Field(default="", description="原内容")
+    polished: str = Field(..., min_length=1, description="润色后内容")
+    keywords_added: list[str] = Field(default_factory=list, description="新增关键词")
+
+
+class ResumePolishResult(BaseModel):
+    summary: str = Field(default="", description="总体评价")
+    sections: list[PolishedSection] = Field(default_factory=list, description="润色结果")
+    suggestions: list[str] = Field(default_factory=list, description="改进建议")
+    matched_keywords: list[str] = Field(default_factory=list, description="已匹配的 JD 关键词")

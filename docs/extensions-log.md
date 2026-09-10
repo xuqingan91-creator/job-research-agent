@@ -10,13 +10,13 @@
 | 1.1 | 数据来源扩展 + 博客抑制 + 地区筛选 | 已完成（2026-09-10） |
 | 1.2 | 中大厂聚焦 + 来源全面性 + 搜索预算定标 | 已完成（2026-09-10） |
 | 2 | Streamlit / Web 界面 | 已完成（2026-09-10） |
-| 3 | 多语言输出 | 已完成（2026-09-10） |
-| 4 | MCP Server | 待开始 |
-| 5 | 浏览器自动化 / JS 渲染抓取 | 待开始 |
-| 6 | 跨会话长期记忆与向量库 | 待开始 |
-| 7 | PDF / 图片报告 | 待开始 |
-| 8 | 多智能体 Supervisor 架构 | 待开始 |
-| 9 | 半自动投递（人审后提交） | 待开始 |
+| 3 | 多语言输出（中文 / English） | 已完成（2026-09-10） |
+| 4 | 简历速填与润色（解析 / 分块 / 按 JD 润色） | 已完成（2026-09-10） |
+| 5 | MCP Server | 待开始 |
+| 6 | 浏览器自动化 + 公司官网简历自动填写（人审后提交） | 待开始 |
+| 7 | 跨会话长期记忆与向量库 | 待开始 |
+| 8 | PDF / 图片报告 | 待开始 |
+| 9 | 多智能体 Supervisor 架构 | 待开始 |
 | 10 | 微信小程序（后端 API + 小程序前端） | 暂缓（可行性已确认） |
 
 ---
@@ -173,6 +173,47 @@ MCP Server（M4）：把“岗位调研/岗位发现”封装成可被其他 Age
 ### 暂缓原因
 
 需要域名与备案等外部条件，当前优先完成无需备案的能力（MCP、抓取、记忆、导出等）。
+
+---
+
+## M4：简历速填与润色（2026-09-10）
+
+### 目的与作用
+
+- 支持上传简历（txt / md / PDF / 图片），自动提取文字并**分板块**（教育背景、项目经历、专业技能等）；
+- 结合目标岗位 JD 做**按岗位润色**：重组表达、突出匹配关键词、给出量化建议；
+- 明确约束“不得编造经历/数据”，只允许改写与重组已有内容；
+- 输出可下载的 Markdown 润色结果，并在界面中提示后续将支持官网自动填写。
+
+### 改动
+
+- `resume.py`：`extract_text`（按扩展名分派）、`extract_text_from_pdf`（pdfplumber）、
+  `extract_text_from_image`（pytesseract OCR）、`split_resume_sections`、`polish_resume`、
+  `render_polished_markdown`
+- `schemas.py`：`ResumeSection` / `ParsedResume` / `PolishedSection` / `ResumePolishResult`
+- `prompts.py`：`POLISH_SYSTEM` 与 `resume_polish_user_prompt`（强调不得编造）
+- `app.py`：新增「简历润色」页签（上传 → 解析 → 分板块展示 → 按 JD 润色 → 下载）
+- 依赖：`pdfplumber`、`pytesseract`（dev：`reportlab` 用于测试生成 PDF）
+- 同时按要求移除日语支持（仅保留中文 / English）
+
+### 验证证据
+
+- 单元测试：简历模块 7 passed（含真实 PDF 解析、OCR 包装逻辑、润色提示词与渲染）；全量 **66 passed**
+- 端到端真实验证（真实 DeepSeek 润色）：
+  - 板块识别：个人信息 / 教育背景 / 项目经历 / 专业技能 / 荣誉奖项（5 个）
+  - 输出：summary + matched_keywords（Python、LangGraph、RAG）+ 5 个板块润色 + 建议
+  - 建议中明确提示“若无 MCP 经历则不建议编造”
+
+### 已知问题
+
+- **图片 OCR 需本机安装 Tesseract**（未安装时给出明确报错）：
+  `winget install --id UB-Mannheim.TesseractOCR`，并安装 chi_sim 语言包；
+- 简历分块基于标题规则，非标准排版（如两栏 PDF）可能分块不准；
+- 企业官网自动填写尚未实现（见下一步）。
+
+### 下一步
+
+MCP Server（M5）；之后 M6 做浏览器自动化 + 公司官网简历自动填写（Playwright + 人工确认后提交）。
 
 ---
 

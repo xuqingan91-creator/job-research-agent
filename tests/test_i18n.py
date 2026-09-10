@@ -25,7 +25,6 @@ def test_report_prompt_uses_english_sections():
 def test_section_titles_are_language_specific():
     assert section_titles("zh")[0] == "JD 要求拆解"
     assert section_titles("en")[0] == "JD Breakdown"
-    assert section_titles("ja")[0] == "JD要件の分解"
 
 
 def test_eval_accepts_english_report_markers():

@@ -2,6 +2,7 @@
 
 from job_research_agent.schemas import (
     JobResearchInput,
+    ParsedResume,
     ResearchPlan,
     SourceItem,
 )
@@ -26,19 +27,11 @@ SECTION_TITLES: dict[str, list[str]] = {
         "Fit Gap",
         "Action Plan",
     ],
-    "ja": [
-        "JD要件の分解",
-        "会社とチーム",
-        "面接と評価ポイント",
-        "適合度ギャップ",
-        "アクションプラン",
-    ],
 }
 
 LANGUAGE_NAMES = {
     "zh": "Chinese (简体中文)",
     "en": "English",
-    "ja": "Japanese (日本語)",
 }
 
 
@@ -58,6 +51,15 @@ REFLECT_SYSTEM = (
 JUDGE_SYSTEM = (
     "You are a strict report quality judge. "
     "Always answer with valid JSON matching the required schema. "
+    "Do NOT wrap the JSON inside another field."
+)
+
+POLISH_SYSTEM = (
+    "You are a senior resume consultant for tech internships. "
+    "Rewrite and reorganize the resume to match the target JD, "
+    "but NEVER fabricate experience, projects, or metrics. "
+    "Only rephrase, reorder, and highlight existing content. "
+    "Always answer with valid JSON matching ResumePolishResult. "
     "Do NOT wrap the JSON inside another field."
 )
 
@@ -121,4 +123,20 @@ def judge_user_prompt(
         f"来源数量：{source_count}\n"
         f"报告内容：\n{report[:6000]}\n\n"
         "请从结构完整度、内容可执行性、来源支撑三个维度打分（1-5），并给一句话评语。"
+    )
+
+
+def resume_polish_user_prompt(parsed: ParsedResume, jd_text: str) -> str:
+    section_lines = "\n\n".join(
+        f"【{section.title}】\n{section.content}" for section in parsed.sections
+    )
+    return (
+        f"目标岗位 JD：\n{jd_text}\n\n"
+        f"候选人简历（分板块）：\n{section_lines or parsed.raw_text}\n\n"
+        "请输出 ResumePolishResult：\n"
+        "1) summary：总体匹配度评价；\n"
+        "2) sections：逐板块给出 original / polished / keywords_added；\n"
+        "3) suggestions：需要补充或量化的地方；\n"
+        "4) matched_keywords：JD 中已匹配的关键词。\n"
+        "要求：只重组与改写已有内容，不得编造经历或数据。"
     )

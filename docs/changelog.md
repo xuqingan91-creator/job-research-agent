@@ -108,3 +108,12 @@
 - 单元测试 4 passed，全量 59 passed
 - 真实验证（en）：报告 9716 字符，五个英文章节标记全部命中
 - 队列：微信小程序可行性确认（FastAPI + uni-app/Taro，需备案域名），暂缓
+
+## 2026-09-10（扩展 M4：简历速填与润色）
+- 新增 resume.py：txt/md/PDF/图片提取、简历分板块、按 JD 润色、Markdown 渲染
+- 新增简历相关 schema 与润色提示词（明确禁止编造经历）
+- Streamlit 新增「简历润色」页签；按用户要求移除日语（仅中/英）
+- 依赖新增 pdfplumber、pytesseract（dev: reportlab）
+- 测试：简历模块 7 passed，全量 66 passed
+- 真实验证：5 个板块识别正确，输出匹配关键词与改进建议；PDF 解析用真实生成 PDF 验证
+- 已知：图片 OCR 需安装 Tesseract；官网自动填写留待 M6（Playwright + 人审提交）

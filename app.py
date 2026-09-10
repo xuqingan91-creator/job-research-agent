@@ -1,11 +1,20 @@
 """Streamlit Web 界面：岗位推荐 + JD 调研。"""
 
+from pathlib import Path
+
 import streamlit as st
 
 from job_research_agent.job_discovery import DEFAULT_THEMES, recommend_jobs
 from job_research_agent.llm import LLMClient
+from job_research_agent.resume import (
+    ResumeParseError,
+    extract_text,
+    polish_resume,
+    render_polished_markdown,
+    split_resume_sections,
+)
 from job_research_agent.runner import generate_plan, run_research, save_report
-from job_research_agent.schemas import JobResearchInput
+from job_research_agent.schemas import JobResearchInput, ParsedResume
 from job_research_agent.search import TavilySearchProvider
 from job_research_agent.ui_helpers import (
     editable_to_plan,
@@ -58,7 +67,7 @@ st.set_page_config(page_title="Job Research Agent", layout="wide")
 st.title("Job Research Agent")
 st.caption("岗位推荐（中大厂优先）· JD 深度调研 · 人机确认大纲 · 评测体系")
 
-tab_jobs, tab_research = st.tabs(["岗位推荐", "JD 调研"])
+tab_jobs, tab_research, tab_resume = st.tabs(["岗位推荐", "JD 调研", "简历润色"])
 
 with tab_jobs:
     theme = st.selectbox("主题方向", [item.name for item in DEFAULT_THEMES])
@@ -101,8 +110,8 @@ with tab_research:
     profile_text = st.text_area("个人背景", height=100)
     language = st.selectbox(
         "报告语言",
-        options=["zh", "en", "ja"],
-        format_func=lambda code: {"zh": "中文", "en": "English", "ja": "日本語"}[code],
+        options=["zh", "en"],
+        format_func=lambda code: {"zh": "中文", "en": "English"}[code],
     )
 
     if st.button("生成调研大纲"):
@@ -163,3 +172,67 @@ with tab_research:
             file_name="job-research-report.md",
             mime="text/markdown",
         )
+
+with tab_resume:
+    st.subheader("简历速填与润色")
+    st.caption("支持 txt / md / PDF / 图片（图片需本机安装 Tesseract OCR）")
+    uploaded = st.file_uploader(
+        "上传简历",
+        type=["txt", "md", "pdf", "png", "jpg", "jpeg"],
+    )
+    jd_for_resume = st.text_area("目标岗位 JD（用于匹配润色）", height=160)
+
+    if st.button("解析简历"):
+        if uploaded is None:
+            st.warning("请先上传简历文件。")
+        else:
+            upload_dir = Path("outputs/uploads")
+            upload_dir.mkdir(parents=True, exist_ok=True)
+            file_path = upload_dir / uploaded.name
+            file_path.write_bytes(uploaded.getbuffer())
+            try:
+                text = extract_text(file_path)
+                parsed = ParsedResume(
+                    raw_text=text,
+                    sections=split_resume_sections(text),
+                    source=file_path.suffix.lstrip("."),
+                )
+                st.session_state["parsed_resume"] = parsed
+            except ResumeParseError as exc:
+                st.error(str(exc))
+            except Exception as exc:  # noqa: BLE001
+                st.error(f"解析失败：{exc}")
+
+    parsed_resume = st.session_state.get("parsed_resume")
+    if parsed_resume:
+        st.success(f"解析成功：识别出 {len(parsed_resume.sections)} 个板块")
+        with st.expander("查看分板块内容", expanded=False):
+            for section in parsed_resume.sections:
+                st.markdown(f"**{section.title}**")
+                st.text(section.content)
+
+        if st.button("按目标 JD 润色", type="primary"):
+            if not jd_for_resume.strip():
+                st.warning("请粘贴目标岗位 JD。")
+            else:
+                with st.spinner("正在按 JD 润色..."):
+                    try:
+                        st.session_state["polish_result"] = polish_resume(
+                            parsed_resume,
+                            jd_text=jd_for_resume,
+                            llm=LLMClient(),
+                        )
+                    except Exception as exc:  # noqa: BLE001
+                        st.error(f"润色失败：{exc}")
+
+    polish_result = st.session_state.get("polish_result")
+    if polish_result:
+        markdown = render_polished_markdown(polish_result)
+        st.markdown(markdown)
+        st.download_button(
+            "下载润色结果",
+            data=markdown,
+            file_name="resume-polished.md",
+            mime="text/markdown",
+        )
+    st.info("后续版本将支持在企业招聘官网自动填写信息（人工确认后提交）。")

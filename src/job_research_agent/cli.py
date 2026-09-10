@@ -60,12 +60,12 @@ def main(argv: list[str] | None = None) -> None:
         profile_text = input().strip()
     except EOFError:
         profile_text = ""
-    print("报告语言（zh=中文 / en=English / ja=日本語，默认 zh）：")
+    print("报告语言（zh=中文 / en=English，默认 zh）：")
     try:
         language = input().strip().lower() or "zh"
     except EOFError:
         language = "zh"
-    if language not in {"zh", "en", "ja"}:
+    if language not in {"zh", "en"}:
         language = "zh"
 
     user_input = JobResearchInput(
