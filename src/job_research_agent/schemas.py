@@ -54,3 +54,22 @@ class SourceItem(BaseModel):
 class ReportJudgeScore(BaseModel):
     quality_score: int = Field(..., ge=1, le=5, description="报告质量分 1-5")
     summary: str = Field(default="", description="一句话评语")
+
+
+class JobPosting(BaseModel):
+    title: str = Field(..., min_length=1, description="岗位标题")
+    url: str = Field(..., min_length=1, description="岗位链接")
+    company: str = Field(default="", description="公司")
+    location: str = Field(default="", description="地点")
+    direction: str = Field(default="", description="岗位方向（多主体分类之一）")
+    tech_tags: list[str] = Field(default_factory=list, description="技术栈标签")
+    description: str = Field(default="", description="岗位描述/摘要")
+    source: str = Field(default="", description="来源")
+
+
+class JobSearchTheme(BaseModel):
+    name: str = Field(..., min_length=1, description="主题名")
+    keywords: list[str] = Field(..., description="搜索关键词")
+    directions: list[str] = Field(default_factory=list, description="限定岗位方向")
+    tech_tags: list[str] = Field(default_factory=list, description="限定技术标签")
+    locations: list[str] = Field(default_factory=list, description="限定地点")
