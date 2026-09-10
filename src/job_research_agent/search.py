@@ -28,8 +28,16 @@ class TavilySearchProvider(SearchProvider):
             self._client = TavilyClient(api_key=config.TAVILY_API_KEY)
         return self._client
 
-    def search(self, query: str, max_results: int = 5) -> list[SourceItem]:
-        response = self._get_client().search(query, max_results=max_results)
+    def search(
+        self,
+        query: str,
+        max_results: int = 5,
+        include_domains: list[str] | None = None,
+    ) -> list[SourceItem]:
+        kwargs: dict[str, Any] = {"max_results": max_results}
+        if include_domains:
+            kwargs["include_domains"] = include_domains
+        response = self._get_client().search(query, **kwargs)
         items: list[SourceItem] = []
         for raw in response.get("results", []):
             items.append(

@@ -61,10 +61,13 @@ class JobPosting(BaseModel):
     url: str = Field(..., min_length=1, description="岗位链接")
     company: str = Field(default="", description="公司")
     location: str = Field(default="", description="地点")
+    province: str = Field(default="", description="省份")
+    remote: bool = Field(default=False, description="是否支持远程")
     direction: str = Field(default="", description="岗位方向（多主体分类之一）")
     tech_tags: list[str] = Field(default_factory=list, description="技术栈标签")
     description: str = Field(default="", description="岗位描述/摘要")
     source: str = Field(default="", description="来源")
+    source_type: str = Field(default="other", description="来源类型")
 
 
 class JobSearchTheme(BaseModel):

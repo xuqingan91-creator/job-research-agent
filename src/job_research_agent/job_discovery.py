@@ -61,6 +61,106 @@ DEFAULT_THEMES: list[JobSearchTheme] = [
     ),
 ]
 
+BLOCKED_DOMAINS = ["career.nankai.edu.cn"]
+
+JOB_PLATFORM_DOMAINS = [
+    "zhipin.com",
+    "zhaopin.com",
+    "liepin.com",
+    "51job.com",
+    "lagou.com",
+    "shixiseng.com",
+    "yingjiesheng.com",
+    "nowcoder.com",
+    "maimai.cn",
+    "linkedin.com",
+]
+
+OFFICIAL_PATTERNS = ["careers.", "jobs.", "/careers", "/jobs", "recruit", "campus.", "hr."]
+CAMPUS_DOMAINS = [".edu.cn", "ncss.cn"]
+BLOG_PATTERNS = [
+    "blog",
+    "csdn.net",
+    "juejin.cn",
+    "zhihu.com",
+    "medium.com",
+    "jianshu.com",
+    "cnblogs.com",
+    "个人博客",
+]
+ARTICLE_URL_PATTERNS = ["/feed/", "/blog/", "/article/", "/post/"]
+
+SOURCE_WEIGHTS = {
+    "official": 1.2,
+    "job_platform": 1.15,
+    "campus": 1.0,
+    "other": 0.9,
+    "blog": 0.3,
+    "blocked": 0.0,
+}
+
+CITY_TO_PROVINCE = {
+    "北京": "北京市",
+    "上海": "上海市",
+    "广州": "广东省",
+    "深圳": "广东省",
+    "东莞": "广东省",
+    "佛山": "广东省",
+    "珠海": "广东省",
+    "杭州": "浙江省",
+    "宁波": "浙江省",
+    "南京": "江苏省",
+    "苏州": "江苏省",
+    "无锡": "江苏省",
+    "成都": "四川省",
+    "武汉": "湖北省",
+    "西安": "陕西省",
+    "天津": "天津市",
+    "重庆": "重庆市",
+    "合肥": "安徽省",
+    "长沙": "湖南省",
+    "青岛": "山东省",
+    "济南": "山东省",
+    "厦门": "福建省",
+    "福州": "福建省",
+    "大连": "辽宁省",
+    "沈阳": "辽宁省",
+}
+
+REMOTE_PATTERNS = ["远程", "remote", "居家办公"]
+
+
+def classify_source(url: str, title: str = "", description: str = "") -> str:
+    lowered_url = url.lower()
+    if any(blocked in lowered_url for blocked in BLOCKED_DOMAINS):
+        return "blocked"
+    if any(pattern in lowered_url for pattern in ARTICLE_URL_PATTERNS):
+        return "blog"
+    if any(domain in lowered_url for domain in JOB_PLATFORM_DOMAINS):
+        return "job_platform"
+    if any(pattern in lowered_url for pattern in OFFICIAL_PATTERNS):
+        return "official"
+    if any(domain in lowered_url for domain in CAMPUS_DOMAINS):
+        return "campus"
+    text = f"{url} {title} {description}".lower()
+    if any(pattern in text for pattern in BLOG_PATTERNS):
+        return "blog"
+    return "other"
+
+
+def extract_location(text: str) -> tuple[str, str, bool]:
+    lowered = text.lower()
+    remote = any(pattern in lowered for pattern in REMOTE_PATTERNS)
+    for city, province in CITY_TO_PROVINCE.items():
+        if city in text:
+            return city, province, remote
+    for province in set(CITY_TO_PROVINCE.values()):
+        if province in text:
+            return province, province, remote
+    if remote:
+        return "远程", "远程", True
+    return "", "", remote
+
 
 def theme_by_name(name: str) -> JobSearchTheme:
     for theme in DEFAULT_THEMES:
@@ -127,7 +227,54 @@ def score_posting(posting: JobPosting, theme: JobSearchTheme) -> float:
             score += 2.0
     if posting.direction in theme.directions:
         score += 3.0
-    return score
+    if theme.locations and posting.location in theme.locations:
+        score += 2.0
+    return score * SOURCE_WEIGHTS.get(posting.source_type, 0.9)
+
+
+def _search(
+    provider,
+    query: str,
+    max_results: int,
+    include_domains: list[str] | None = None,
+):
+    try:
+        if include_domains:
+            return provider.search(
+                query,
+                max_results=max_results,
+                include_domains=include_domains,
+            )
+        return provider.search(query, max_results=max_results)
+    except TypeError:
+        return provider.search(query, max_results=max_results)
+
+
+def _passes_filters(
+    posting: JobPosting,
+    *,
+    include_blogs: bool,
+    provinces: list[str] | None,
+    cities: list[str] | None,
+    allow_remote: bool,
+) -> bool:
+    if posting.source_type == "blocked":
+        return False
+    if posting.source_type == "blog" and not include_blogs:
+        return False
+    if provinces or cities:
+        if posting.remote and not allow_remote:
+            return False
+        matched = False
+        if provinces and posting.province in provinces:
+            matched = True
+        if cities and posting.location in cities:
+            matched = True
+        if posting.remote and allow_remote:
+            matched = True
+        if not matched:
+            return False
+    return True
 
 
 def recommend_jobs(
@@ -136,24 +283,58 @@ def recommend_jobs(
     search_provider,
     max_results: int = 10,
     results_per_keyword: int = 5,
+    include_blogs: bool = False,
+    provinces: list[str] | None = None,
+    cities: list[str] | None = None,
+    allow_remote: bool = True,
+    use_source_queries: bool = True,
 ) -> list[JobPosting]:
     theme = theme_by_name(theme_name)
     seen: set[str] = set()
     candidates: list[JobPosting] = []
     for keyword in theme.keywords:
-        for item in search_provider.search(keyword, max_results=results_per_keyword):
-            if not item.url or item.url in seen:
-                continue
-            seen.add(item.url)
-            candidates.append(
-                JobPosting(
-                    title=item.title or item.snippet[:40] or item.url,
-                    url=item.url,
-                    description=item.snippet,
-                    source="web",
-                )
+        queries: list[tuple[str, list[str] | None]] = [(keyword, None)]
+        if use_source_queries:
+            queries.append((f"{keyword} 官网 招聘", None))
+            queries.append((keyword, JOB_PLATFORM_DOMAINS))
+        for query, domains in queries:
+            results = _search(
+                search_provider,
+                query,
+                results_per_keyword,
+                include_domains=domains,
             )
+            for item in results:
+                if not item.url or item.url in seen:
+                    continue
+                seen.add(item.url)
+                title = item.title or item.snippet[:40] or item.url
+                description = item.snippet
+                location, province, remote = extract_location(f"{title} {description}")
+                candidates.append(
+                    JobPosting(
+                        title=title,
+                        url=item.url,
+                        description=description,
+                        location=location,
+                        province=province,
+                        remote=remote,
+                        source="web",
+                        source_type=classify_source(item.url, title, description),
+                    )
+                )
     classified = [classify_posting(item) for item in candidates]
-    filtered = filter_postings(classified, theme)
+    allowed = [
+        item
+        for item in classified
+        if _passes_filters(
+            item,
+            include_blogs=include_blogs,
+            provinces=provinces,
+            cities=cities,
+            allow_remote=allow_remote,
+        )
+    ]
+    filtered = filter_postings(allowed, theme)
     ranked = sorted(filtered, key=lambda item: score_posting(item, theme), reverse=True)
     return ranked[:max_results]
