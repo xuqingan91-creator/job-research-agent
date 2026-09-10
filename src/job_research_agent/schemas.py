@@ -68,6 +68,8 @@ class JobPosting(BaseModel):
     description: str = Field(default="", description="岗位描述/摘要")
     source: str = Field(default="", description="来源")
     source_type: str = Field(default="other", description="来源类型")
+    company_tier: str = Field(default="其他", description="公司分层：大厂/中厂/其他")
+    company_type: str = Field(default="其他", description="公司类型：互联网/外企/硬件电子/其他")
 
 
 class JobSearchTheme(BaseModel):
