@@ -9,7 +9,7 @@
 | 1 | 岗位发现与多主体分类筛选 | 已完成（2026-09-10） |
 | 1.1 | 数据来源扩展 + 博客抑制 + 地区筛选 | 已完成（2026-09-10） |
 | 1.2 | 中大厂聚焦 + 来源全面性 + 搜索预算定标 | 已完成（2026-09-10） |
-| 2 | Streamlit / Web 界面 | 待开始 |
+| 2 | Streamlit / Web 界面 | 已完成（2026-09-10） |
 | 3 | 多语言输出 | 待开始 |
 | 4 | MCP Server | 待开始 |
 | 5 | 浏览器自动化 / JS 渲染抓取 | 待开始 |
@@ -89,6 +89,40 @@ Steamlit / Web 界面（M2）：主题选择 + 推荐列表 + 报告生成入口
 ### 下一步
 
 Streamlit / Web 界面（M2）：主题选择 + 地区筛选 + 公司分层筛选 + 推荐列表。
+
+---
+
+## M2：Streamlit / Web 界面（2026-09-10）
+
+### 目的与作用
+
+- 把岗位推荐与 JD 调研搬进浏览器，不再依赖命令行；
+- 「岗位推荐」页：主题方向 + 省份/城市 + 公司分层（大厂/中厂/其他）+ 远程开关 + 条数上限；
+- 「JD 调研」页：粘贴 JD → 生成调研大纲 → 页面内直接修改章节与关键词 → 开始调研 → 在线查看与下载 Markdown 报告；
+- 复用现有 graph 与 `runner.run_research`，通过 `confirm_plan` 回调把人工修改的大纲注入真实 HITL 流程，无需重写编排。
+
+### 改动
+
+- 新增 `app.py`（Streamlit 双页签界面）
+- 新增 `ui_helpers.py`（`plan_to_editable` / `editable_to_plan` / `format_job_markdown`）
+- `runner.py` 新增 `generate_plan()`（供界面首屏生成大纲）
+- 依赖新增 `streamlit==1.63.0`（含 pandas/pyarrow 等）
+
+### 验证证据
+
+- 单元测试：UI 辅助 4 passed；全量 **55 passed**
+- 启动验证：`streamlit run app.py --server.headless true` 启动成功
+  - `GET /_stcore/health` → 200 `ok`
+  - `GET /` → 200，7459 bytes
+
+### 已知问题
+
+- 岗位推荐每次点击都会实时消耗 Tavily 配额（默认 12 轮搜索）；
+- 调研过程暂无流式进度条，只有 spinner（后续可接 SSE/流式输出）。
+
+### 下一步
+
+多语言输出（M3）：报告支持中/英切换（面向外企 JD）。
 
 ---
 

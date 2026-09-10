@@ -95,3 +95,9 @@
 - 牛客保持 job_platform 高权重，仅过滤 /feed/、/discuss/ 与文章标题
 - 搜索预算实验：6/9/12/15 轮对比，12 轮为拐点；默认 max_searches=12、max_results=20
 - 最终真实验证：12 轮 → 20 条，大厂 14 条、外企 3 条，文章残留 0
+
+## 2026-09-10（扩展 M2：Streamlit / Web 界面）
+- 新增 app.py 双页签界面：岗位推荐（主题/地区/公司分层/远程筛选）+ JD 调研（大纲人工编辑）
+- 新增 ui_helpers.py（大纲编辑转换、岗位卡片渲染）与 runner.generate_plan
+- 依赖新增 streamlit 1.63.0
+- 验证：UI 辅助测试 4 passed，全量 55 passed；Streamlit 健康检查 200 ok、首页 200（7459 bytes）

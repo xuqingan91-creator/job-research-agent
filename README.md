@@ -31,6 +31,20 @@ uv run job-research-agent
 4. Agent 生成大纲后暂停：直接回车=确认，粘贴 JSON=替换大纲，输入 no=退出；
 5. 调研完成后报告保存在 `outputs/reports/`。
 
+### Web 界面（推荐）
+
+```powershell
+.\.venv\Scripts\streamlit.exe run app.py
+# 或：uv run streamlit run app.py
+```
+
+浏览器打开 `http://localhost:8501`：
+
+- **岗位推荐**：选择主题方向，按省份 / 城市 / 公司分层（大厂、中厂）筛选，
+  结果优先展示企业官网与招聘平台岗位，自动过滤博客与帖子；
+- **JD 调研**：粘贴 JD → 生成调研大纲 → 在页面上直接修改章节与关键词 →
+  开始多轮调研 → 在线查看并下载 Markdown 报告。
+
 ## 测试
 
 ```powershell

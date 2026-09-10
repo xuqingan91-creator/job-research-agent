@@ -13,6 +13,7 @@ from langgraph.types import Command
 from job_research_agent.fetch import fetch_page
 from job_research_agent.graph import build_research_graph
 from job_research_agent.llm import LLMClient
+from job_research_agent.prompts import PLANNER_SYSTEM, planner_user_prompt
 from job_research_agent.schemas import JobResearchInput, ResearchPlan
 from job_research_agent.state import ResearchState
 
@@ -23,6 +24,15 @@ class PlanReviewRequired(Exception):
     def __init__(self, plan: ResearchPlan) -> None:
         self.plan = plan
         super().__init__("plan requires human review")
+
+
+def generate_plan(user_input: JobResearchInput, *, llm: LLMClient) -> ResearchPlan:
+    """只生成调研大纲（供 UI 首屏展示与人工编辑）。"""
+    return llm.structured(
+        ResearchPlan,
+        system_prompt=PLANNER_SYSTEM,
+        user_prompt=planner_user_prompt(user_input),
+    )
 
 
 def run_research(
