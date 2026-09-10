@@ -1,6 +1,6 @@
 """全项目共用的 Pydantic 数据模板。"""
 
-from typing import Annotated, Any
+from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, BeforeValidator, Field, model_validator
 
@@ -24,6 +24,7 @@ class JobResearchInput(BaseModel):
     company: str = Field(..., min_length=1, description="公司/岗位名称")
     jd_text: str = Field(..., min_length=1, description="JD 全文")
     profile_text: str = Field(default="", description="个人背景简述")
+    language: Literal["zh", "en", "ja"] = Field(default="zh", description="报告语言")
 
 
 class ResearchPlan(BaseModel):

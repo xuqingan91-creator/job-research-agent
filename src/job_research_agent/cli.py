@@ -60,11 +60,19 @@ def main(argv: list[str] | None = None) -> None:
         profile_text = input().strip()
     except EOFError:
         profile_text = ""
+    print("报告语言（zh=中文 / en=English / ja=日本語，默认 zh）：")
+    try:
+        language = input().strip().lower() or "zh"
+    except EOFError:
+        language = "zh"
+    if language not in {"zh", "en", "ja"}:
+        language = "zh"
 
     user_input = JobResearchInput(
         company=company,
         jd_text=jd_text,
         profile_text=profile_text,
+        language=language,
     )
     checkpoints_dir = Path("outputs")
     checkpoints_dir.mkdir(parents=True, exist_ok=True)

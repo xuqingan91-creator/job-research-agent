@@ -99,6 +99,11 @@ with tab_research:
     company = st.text_input("目标公司/岗位", placeholder="例：字节跳动 AI Agent 实习")
     jd_text = st.text_area("JD 全文", height=200)
     profile_text = st.text_area("个人背景", height=100)
+    language = st.selectbox(
+        "报告语言",
+        options=["zh", "en", "ja"],
+        format_func=lambda code: {"zh": "中文", "en": "English", "ja": "日本語"}[code],
+    )
 
     if st.button("生成调研大纲"):
         if not company or not jd_text:
@@ -111,6 +116,7 @@ with tab_research:
                             company=company,
                             jd_text=jd_text,
                             profile_text=profile_text,
+                            language=language,
                         ),
                         llm=LLMClient(),
                     )
@@ -135,6 +141,7 @@ with tab_research:
                             company=company,
                             jd_text=jd_text,
                             profile_text=profile_text,
+                            language=language,
                         ),
                         llm=LLMClient(),
                         search_provider=TavilySearchProvider(),

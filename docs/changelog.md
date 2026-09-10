@@ -101,3 +101,10 @@
 - 新增 ui_helpers.py（大纲编辑转换、岗位卡片渲染）与 runner.generate_plan
 - 依赖新增 streamlit 1.63.0
 - 验证：UI 辅助测试 4 passed，全量 55 passed；Streamlit 健康检查 200 ok、首页 200（7459 bytes）
+
+## 2026-09-10（扩展 M3：多语言输出）
+- JobResearchInput 新增 language（zh/en/ja）；Planner/Report 提示词与评测标记按语言切换
+- CLI 与 Streamlit 界面新增语言选择
+- 单元测试 4 passed，全量 59 passed
+- 真实验证（en）：报告 9716 字符，五个英文章节标记全部命中
+- 队列：微信小程序可行性确认（FastAPI + uni-app/Taro，需备案域名），暂缓

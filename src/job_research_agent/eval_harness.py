@@ -9,11 +9,11 @@ from datetime import datetime
 from pathlib import Path
 
 from job_research_agent.llm import LLMClient
-from job_research_agent.prompts import JUDGE_SYSTEM, judge_user_prompt
+from job_research_agent.prompts import JUDGE_SYSTEM, judge_user_prompt, section_titles
 from job_research_agent.schemas import JobResearchInput, ReportJudgeScore
 from job_research_agent.state import ResearchState
 
-REQUIRED_MARKERS = ["JD", "公司", "面经", "匹配度", "行动清单"]
+REQUIRED_MARKERS = section_titles("zh")
 
 
 @dataclass
@@ -46,10 +46,11 @@ def score_state(
     report = state.get("final_report", "")
     sources = len(state.get("sources", []))
     pages = len(state.get("pages", []))
-    found = [marker for marker in REQUIRED_MARKERS if marker in report]
-    missing = [marker for marker in REQUIRED_MARKERS if marker not in report]
+    markers = section_titles(state["user_input"].language)
+    found = [marker for marker in markers if marker in report]
+    missing = [marker for marker in markers if marker not in report]
 
-    section_part = len(found) / len(REQUIRED_MARKERS) * 70.0
+    section_part = len(found) / len(markers) * 70.0
     source_part = 15.0 if sources >= min_sources else 0.0
     length_part = 15.0 if len(report) >= 800 else 0.0
     rule_score = round(section_part + source_part + length_part, 1)
